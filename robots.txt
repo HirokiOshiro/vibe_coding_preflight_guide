@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://hirokioshiro.github.io/vibe_coding_preflight_guide/sitemap.xml

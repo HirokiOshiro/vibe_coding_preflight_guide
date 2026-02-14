@@ -4,30 +4,35 @@
 
 ## 公開先
 
-- GitHub Pages（User Pages）で公開予定
-- 公開URL: （設定後に追記）
+- GitHub Pages（Project Pages）で公開
+- 公開URL: https://hirokioshiro.github.io/vibe_coding_preflight_guide/
 
 ## リポジトリ構成
 
-- `vibe_coding_preflight_guide.html` : 本体（HTML/CSS/JavaScriptを1ファイルに集約）
+- `index.html` : 本体（HTML）
+- `assets/css/styles.css` : ページスタイル
+- `assets/js/main.js` : 画面インタラクション（チェックリスト、コピー、目次ハイライト）
+- `404.html` : GitHub Pages用404ページ
+- `robots.txt` : クローラー向け設定
+- `sitemap.xml` : 検索エンジン向けサイトマップ
 - `CHANGELOG.md` : バージョン履歴
 - `README.md` : 運用方針・更新手順
 
 ## ローカル確認
 
-ブラウザで `vibe_coding_preflight_guide.html` を直接開いて確認できます。
+ブラウザで `index.html` を直接開いて確認できます。
 
-## GitHub Pages 公開手順（User Pages想定）
+## GitHub Pages 公開手順（Project Pages想定）
 
-1. リポジトリ名を `username.github.io` 形式にする（User Pagesの場合）
-2. このリポジトリに `main` ブランチへ push
-3. GitHub の Settings → Pages で Source を `Deploy from a branch` に設定
-4. Branch を `main` / `/ (root)` に設定
-5. 公開URLで以下を確認
+1. このリポジトリに `main` ブランチへ push
+2. GitHub の Settings → Pages で Source を `Deploy from a branch` に設定
+3. Branch を `main` / `/ (root)` に設定
+4. 公開URLで以下を確認
    - 目次リンク遷移
    - チェックリスト操作
    - Deep Diveプロンプトコピー
    - 外部参照リンク
+  - 404ページ表示（存在しないURL）
 
 ## 更新フロー（推奨）
 
@@ -57,6 +62,7 @@
 | 日付 | バージョン | 種別 | 概要 |
 |---|---|---|---|
 | 2026-02-14 | v0.1.0 | 初期整備 | 公開前メタ情報、A11y改善、運用メタ追加 |
+| 2026-02-14 | v0.2.0 | 構成改善 | JS分離、GitHub Pages補助ファイル追加、README整備 |
 
 ## 今後の更新で有益な運用提案
 
@@ -65,3 +71,8 @@
 - 英語版方針の先行決定: 単ページ内切替か `/en/` 別ページかを先に固定
 - 画像OGP導入（必要時）: SNS共有品質が必要になった段階で追加
 - 将来の自動化候補: GitHub Actionsでリンクチェック（必要になった時点で導入）
+
+## 補足（User Pagesへ切り替える場合）
+
+- User Pagesを使う場合、原則リポジトリ名を `username.github.io` にする必要があります。
+- 切り替え時は `index.html` の `canonical` / `og:url`、`robots.txt`、`sitemap.xml`、`404.html` のリンク先を更新してください。
