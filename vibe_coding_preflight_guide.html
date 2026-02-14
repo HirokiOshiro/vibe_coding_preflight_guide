@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vibe Coding Preflight — コードを書く前に考えるべきこと</title>
+<meta name="description" content="Vibe Codingでコードを書く前に確認したい要件定義・設計・品質・安全性の基礎を、非エンジニア向けに整理した参照ガイド。">
+<meta name="theme-color" content="#1a1a1a">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="Vibe Coding Preflight — コードを書く前に考えるべきこと">
+<meta property="og:description" content="要件定義・設計・品質・安全性を、バイブコーディング前に確認するための学習ガイド。">
+<meta property="og:site_name" content="Vibe Coding Preflight Guide">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%AD%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Noto+Serif+JP:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf8f5;
+    --bg-card: #ffffff;
+    --bg-dark: #1a1a1a;
+    --text: #2c2c2c;
+    --text-light: #6b6b6b;
+    --text-inv: #f0ece6;
+    --accent: #c2410c;
+    --accent-light: #fb923c;
+    --accent-bg: #fff7ed;
+    --border: #e5e0d8;
+    --border-dark: #d4cdc3;
+    --green: #166534;
+    --green-bg: #f0fdf4;
+    --blue: #1e40af;
+    --blue-bg: #eff6ff;
+    --purple: #6b21a8;
+    --purple-bg: #faf5ff;
+    --red: #991b1b;
+    --red-bg: #fef2f2;
+    --yellow: #854d0e;
+    --yellow-bg: #fefce8;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Noto Sans JP', sans-serif;
+    --serif: 'Noto Serif JP', serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.85;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    background: var(--bg-dark);
+    color: var(--text-inv);
+    padding: 80px 24px 64px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(194,65,12,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-inner {
+    max-width: 780px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .hero-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent-light);
+    margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 20px;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent-light);
+  }
+  .hero-desc {
+    font-size: 15px;
+    line-height: 1.9;
+    color: #b0a99e;
+    max-width: 640px;
+  }
+
+  /* ── Navigation ── */
+  .toc-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(250,248,245,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+  }
+  .toc-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .toc-inner::-webkit-scrollbar { display: none; }
+  .toc-link {
+    display: block;
+    padding: 14px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-light);
+    text-decoration: none;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .toc-link:hover, .toc-link.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* ── Main Layout ── */
+  .main {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ── Section ── */
+  .section {
+    padding: 56px 0 40px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section:last-child { border-bottom: none; }
+
+  .section-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .section h2 {
+    font-family: var(--serif);
+    font-size: clamp(22px, 3.5vw, 28px);
+    font-weight: 700;
+    line-height: 1.45;
+    margin-bottom: 8px;
+  }
+  .section-subtitle {
+    font-size: 14px;
+    color: var(--text-light);
+    margin-bottom: 28px;
+  }
+
+  .section h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 32px 0 12px;
+    padding-left: 14px;
+    border-left: 3px solid var(--accent);
+  }
+
+  p { margin-bottom: 16px; }
+  p + ul, p + ol { margin-top: -8px; }
+
+  /* ── Intro Epigraph ── */
+  .epigraph {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px 32px;
+    margin: 24px 0 32px;
+    position: relative;
+  }
+  .epigraph::before {
+    content: '"';
+    font-family: var(--serif);
+    font-size: 64px;
+    color: var(--border-dark);
+    position: absolute;
+    top: -8px;
+    left: 16px;
+    line-height: 1;
+  }
+  .epigraph p {
+    font-family: var(--serif);
+    font-size: 14px;
+    color: var(--text-light);
+    line-height: 1.9;
+    margin-bottom: 8px;
+  }
+  .epigraph p:last-child { margin-bottom: 0; }
+
+  /* ── Concept Map ── */
+  .concept-flow {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    align-items: center;
+    gap: 0;
+    margin: 24px 0;
+  }
+  .concept-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+    text-align: center;
+  }
+  .concept-box .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--text-light);
+    margin-bottom: 4px;
+  }
+  .concept-box .name {
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .concept-box .desc {
+    font-size: 12px;
+    color: var(--text-light);
+    margin-top: 4px;
+  }
+  .concept-arrow {
+    font-size: 20px;
+    color: var(--border-dark);
+    text-align: center;
+    padding: 0 4px;
+  }
+
+  @media (max-width: 640px) {
+    .concept-flow {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+    .concept-arrow {
+      transform: rotate(90deg);
+      padding: 4px 0;
+    }
+  }
+
+  /* ── Checklist ── */
+  .checklist {
+    list-style: none;
+    margin: 16px 0;
+    padding: 0;
+  }
+  .checklist li {
+    padding: 12px 16px 12px 44px;
+    position: relative;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    font-size: 14px;
+    line-height: 1.7;
+    transition: background 0.15s;
+  }
+  .checklist li:hover {
+    background: rgba(0,0,0,0.02);
+  }
+  .checklist li:focus-visible,
+  .deepdive code:focus-visible,
+  .kw-item:focus-visible,
+  .toc-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .checklist li::before {
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: 14px;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border-dark);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .checklist li.checked::before {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .checklist li.checked::after {
+    content: '✓';
+    position: absolute;
+    left: 17px;
+    top: 11px;
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .checklist li .q {
+    font-weight: 500;
+    display: block;
+  }
+  .checklist li .hint {
+    font-size: 13px;
+    color: var(--text-light);
+    display: block;
+    margin-top: 2px;
+  }
+
+  /* ── Colored Cards ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin: 20px 0;
+  }
+  .card {
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid;
+  }
+  .card.green { background: var(--green-bg); border-color: #bbf7d0; }
+  .card.blue { background: var(--blue-bg); border-color: #bfdbfe; }
+  .card.purple { background: var(--purple-bg); border-color: #e9d5ff; }
+  .card.red { background: var(--red-bg); border-color: #fecaca; }
+  .card.yellow { background: var(--yellow-bg); border-color: #fef08a; }
+  .card.orange { background: var(--accent-bg); border-color: #fed7aa; }
+  .card .card-icon {
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+  .card .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .card .card-desc {
+    font-size: 12.5px;
+    color: var(--text-light);
+    line-height: 1.75;
+  }
+  .card .card-title.green-t { color: var(--green); }
+  .card .card-title.blue-t { color: var(--blue); }
+  .card .card-title.purple-t { color: var(--purple); }
+  .card .card-title.red-t { color: var(--red); }
+  .card .card-title.yellow-t { color: var(--yellow); }
+  .card .card-title.orange-t { color: var(--accent); }
+
+  /* ── Table ── */
+  .ref-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 13.5px;
+  }
+  .ref-table th {
+    background: var(--bg-dark);
+    color: var(--text-inv);
+    text-align: left;
+    padding: 10px 14px;
+    font-weight: 500;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+  }
+  .ref-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .ref-table tr:hover td {
+    background: rgba(0,0,0,0.015);
+  }
+  .ref-table .tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+  .tag-req { background: #dbeafe; color: var(--blue); }
+  .tag-des { background: #e9d5ff; color: var(--purple); }
+  .tag-sec { background: #fecaca; color: var(--red); }
+  .tag-ops { background: #d1fae5; color: var(--green); }
+  .tag-test { background: #fef08a; color: var(--yellow); }
+
+  /* ── Diagram ── */
+  .diagram-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 32px 24px;
+    margin: 24px 0;
+    overflow-x: auto;
+  }
+  .v-model {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 40px;
+    min-width: 500px;
+  }
+  .v-col {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex: 1;
+    max-width: 240px;
+  }
+  .v-col.right { padding-top: 0; }
+  .v-item {
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 500;
+    border: 1px solid;
+    position: relative;
+  }
+  .v-item .v-sub {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-light);
+    display: block;
+    margin-top: 2px;
+  }
+  .v-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding-top: 80px;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .v-center-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-light);
+    writing-mode: vertical-rl;
+    letter-spacing: 2px;
+  }
+  .v-connect {
+    font-size: 11px;
+    color: var(--text-light);
+    text-align: center;
+    padding: 2px 0;
+    font-family: var(--mono);
+  }
+
+  /* ── Deep Dive Prompt ── */
+  .deepdive {
+    background: linear-gradient(135deg, #1e1b4b, #312e81);
+    color: #e0e7ff;
+    border-radius: 10px;
+    padding: 24px 28px;
+    margin: 20px 0;
+  }
+  .deepdive .dd-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #a5b4fc;
+    margin-bottom: 8px;
+  }
+  .deepdive .dd-title {
+    font-weight: 700;
+    font-size: 15px;
+    color: #fff;
+    margin-bottom: 10px;
+  }
+  .deepdive code {
+    display: block;
+    background: rgba(0,0,0,0.3);
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.8;
+    color: #c7d2fe;
+    white-space: pre-wrap;
+    word-break: break-all;
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+  }
+  .deepdive code:hover {
+    background: rgba(0,0,0,0.4);
+  }
+  .deepdive code::after {
+    content: '📋 クリックでコピー';
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    font-size: 10px;
+    color: #818cf8;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .deepdive code:hover::after { opacity: 1; }
+  .deepdive code.copied::after {
+    content: '✓ コピーしました';
+    opacity: 1;
+    color: #34d399;
+  }
+
+  /* ── Callout ── */
+  .callout {
+    border-left: 3px solid;
+    padding: 16px 20px;
+    margin: 20px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 14px;
+  }
+  .callout.warn {
+    border-color: var(--accent);
+    background: var(--accent-bg);
+  }
+  .callout.info {
+    border-color: var(--blue);
+    background: var(--blue-bg);
+  }
+  .callout .callout-title {
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+  .callout.warn .callout-title { color: var(--accent); }
+  .callout.info .callout-title { color: var(--blue); }
+
+  /* ── Keyword Index ── */
+  .kw-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin: 20px 0;
+  }
+  .kw-item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .kw-item:hover {
+    border-color: var(--accent);
+    box-shadow: 0 2px 8px rgba(194,65,12,0.08);
+  }
+  .kw-item .kw-en {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-light);
+  }
+
+  /* ── Footer ── */
+  .footer {
+    background: var(--bg-dark);
+    color: #8a8480;
+    padding: 40px 24px;
+    font-size: 12px;
+    line-height: 1.8;
+    margin-top: 40px;
+  }
+  .footer-inner {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  .footer a {
+    color: #b0a99e;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  /* ── Utility ── */
+  .mt-sm { margin-top: 12px; }
+  .mt-md { margin-top: 24px; }
+  .mb-sm { margin-bottom: 12px; }
+  .text-sm { font-size: 13px; }
+  .text-light { color: var(--text-light); }
+  .font-mono { font-family: var(--mono); }
+
+  /* ── Print ── */
+  @media print {
+    .toc-bar { display: none; }
+    .hero { padding: 40px 24px 32px; }
+    .section { padding: 32px 0 24px; }
+    .deepdive code::after { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ Hero ═══════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">Vibe Coding Preflight Guide</div>
+    <h1>コードを書く前に<br><em>考えるべきこと</em></h1>
+    <p class="hero-desc">
+      生成AIにコードを任せる前に立ち止まって考えるための参照ガイド。<br>
+      ソフトウェアエンジニアリングの基本概念を、バイブコーディングの文脈で非エンジニア向けに再構成。<br>
+      IPA（独立行政法人 情報処理推進機構）のガイドラインを中心に、専門家が前提とする知識体系を概観する。
+    </p>
+  </div>
+</header>
+
+<!-- ═══════════════ TOC ═══════════════ -->
+<nav class="toc-bar">
+  <div class="toc-inner">
+    <a href="#why" class="toc-link">なぜ必要か</a>
+    <a href="#map" class="toc-link">全体像</a>
+    <a href="#phase1" class="toc-link">① 要求を整理する</a>
+    <a href="#phase2" class="toc-link">② 設計を考える</a>
+    <a href="#phase3" class="toc-link">③ 見えない品質</a>
+    <a href="#phase4" class="toc-link">④ 安全性</a>
+    <a href="#phase5" class="toc-link">⑤ 全体を織る</a>
+    <a href="#checklist" class="toc-link">✓ チェックリスト</a>
+    <a href="#keywords" class="toc-link">用語索引</a>
+  </div>
+</nav>
+
+<main class="main">
+
+<!-- ═══════════════ Section: Why ═══════════════ -->
+<section class="section" id="why">
+  <div class="section-num">INTRODUCTION</div>
+  <h2>なぜ「コードの前」に考える必要があるのか</h2>
+  <p class="section-subtitle">「作りたいもの」と「動くシステム」の間にある見えない溝について</p>
+
+  <div class="epigraph">
+    <p>作りたいもののイメージを大切に、それをシステムでどのように実現するかの具体的な方法・工程まで描く。</p>
+    <p>はじめの要求仕様を確認できたら、いきなり実装に進むのではなく、設計フェーズに集中する。</p>
+    <p>「何を作るべきか」と「システムとして表現するもの」それぞれを同時に深く問い続ける必要がある。</p>
+  </div>
+
+  <p>生成AIは「コードを書く」ことを代行してくれます。しかしソフトウェア開発において、コードを書くこと（実装）は工程全体のごく一部にすぎません。</p>
+  <p>IPAの調査によれば、システム開発プロジェクトの工期遅延理由の上位は<strong>要件定義フェーズの問題</strong>に起因しています。つまり「何を作るか」「どう作るか」の整理が不十分なまま作り始めることが、最も典型的な失敗パターンです。</p>
+  <p>バイブコーディングでこの問題がさらに深刻化するのは、AIが「それらしく動くもの」を瞬時に出力してしまうため、<strong>設計の不在に気づくタイミングが遅れる</strong>からです。修正を重ねるうちに別の箇所が壊れ、収拾がつかなくなる — これは設計なき開発の必然的な帰結です。</p>
+
+  <div class="callout warn">
+    <div class="callout-title">⚠ この文書が前提とすること</div>
+    本ガイドの目的は、非エンジニアがプロのソフトウェアエンジニアになることではありません。「こういう概念や落とし穴が存在する」ということを知っているだけで、AIへの指示精度と判断力が根本的に変わる — その最小限の知識地図を提供することです。
+  </div>
+</section>
+
+<!-- ═══════════════ Section: Map ═══════════════ -->
+<section class="section" id="map">
+  <div class="section-num">OVERVIEW</div>
+  <h2>ソフトウェア開発の全体像</h2>
+  <p class="section-subtitle">バイブコーディングが担うのは「実装」の一部。その前後に広がる工程を俯瞰する</p>
+
+  <div class="concept-flow">
+    <div class="concept-box">
+      <div class="label">WHAT &amp; WHY</div>
+      <div class="name">要件定義</div>
+      <div class="desc">何を・なぜ作るか</div>
+    </div>
+    <div class="concept-arrow">→</div>
+    <div class="concept-box">
+      <div class="label">HOW</div>
+      <div class="name">設計</div>
+      <div class="desc">どう構造化するか</div>
+    </div>
+    <div class="concept-arrow">→</div>
+    <div class="concept-box" style="border-color: var(--accent); box-shadow: 0 0 0 2px rgba(194,65,12,0.1);">
+      <div class="label" style="color:var(--accent);">BUILD</div>
+      <div class="name" style="color:var(--accent);">実装</div>
+      <div class="desc">← AIが手伝える範囲</div>
+    </div>
+  </div>
+
+  <p>上の図は極度に単純化されたものですが、重要なのは<strong>AIがもっとも得意な「実装」の前段階に、2つの大きな知的作業がある</strong>という認識です。</p>
+
+  <h3>V字モデル — 開発とテストの対応関係</h3>
+  <p>IPAの共通フレーム2013やV字モデルでは、各開発フェーズに対応するテスト工程が定義されています。上流で決めたことは、対応するテストで検証されるという構造です。</p>
+
+  <div class="diagram-wrap">
+    <div class="v-model">
+      <div class="v-col">
+        <div class="v-item" style="background:var(--blue-bg);border-color:#bfdbfe;">
+          要件定義<span class="v-sub">何を・なぜ作るか</span>
+        </div>
+        <div class="v-connect">↓</div>
+        <div class="v-item" style="background:var(--purple-bg);border-color:#e9d5ff;">
+          基本設計<span class="v-sub">外部から見える仕様</span>
+        </div>
+        <div class="v-connect">↓</div>
+        <div class="v-item" style="background:var(--green-bg);border-color:#bbf7d0;">
+          詳細設計<span class="v-sub">内部の処理手順</span>
+        </div>
+        <div class="v-connect">↓ 実装</div>
+      </div>
+      <div class="v-center">
+        <div class="v-connect" style="font-size:10px;">対応</div>
+        <div class="v-connect">⟷</div>
+        <div class="v-connect" style="padding:16px 0;">⟷</div>
+        <div class="v-connect" style="padding:16px 0;">⟷</div>
+      </div>
+      <div class="v-col right">
+        <div class="v-item" style="background:var(--blue-bg);border-color:#bfdbfe;">
+          受入テスト<span class="v-sub">要件を満たすか？</span>
+        </div>
+        <div class="v-connect">↑</div>
+        <div class="v-item" style="background:var(--purple-bg);border-color:#e9d5ff;">
+          結合テスト<span class="v-sub">機能が連携するか？</span>
+        </div>
+        <div class="v-connect">↑</div>
+        <div class="v-item" style="background:var(--green-bg);border-color:#bbf7d0;">
+          単体テスト<span class="v-sub">個別機能は正しいか？</span>
+        </div>
+        <div class="v-connect">↑ テスト</div>
+      </div>
+    </div>
+  </div>
+
+  <p>バイブコーディングでは、実装とテストの両方をAIに任せがちですが、「何をテストすべきか」を決めるのは人間の仕事です。テスト項目を考えることは、裏返せば設計を考えることに他なりません。</p>
+
+  <div class="deepdive">
+    <div class="dd-label">🤖 AI DEEP DIVE PROMPT</div>
+    <div class="dd-title">この概念をさらに深く理解したいとき</div>
+    <code onclick="copyPrompt(this)">私はプログラミング初学者で、バイブコーディング（AIにコードを書かせる開発手法）でWebアプリを作ろうとしています。
+ソフトウェア開発のV字モデルについて、以下の観点で教えてください：
+1. 各フェーズで具体的に「何を決める」のか、Webアプリ（例：問い合わせ管理ツール）を例に説明
+2. 設計を飛ばして実装した場合に、どのフェーズの欠落が原因でどんな問題が起きるか、具体的なシナリオで示す
+3. バイブコーディングの文脈で、各フェーズの作業をどう簡略化できるか（完全省略ではなく）
+日本語で、専門用語には初出時に簡単な説明を添えてください。</code>
+  </div>
+</section>
+
+<!-- ═══════════════ Phase 1: Requirements ═══════════════ -->
+<section class="section" id="phase1">
+  <div class="section-num">PHASE 01</div>
+  <h2>要求を整理する</h2>
+  <p class="section-subtitle">「何を作るべきか」を言語化する — 要件定義の基本</p>
+
+  <p>IPA「ユーザのための要件定義ガイド 第2版」では、要件定義を「システムに求める条件を、機能要件と非機能要件に分けて定義する作業工程」と位置づけています。</p>
+
+  <h3>機能要件と非機能要件</h3>
+
+  <div class="card-grid">
+    <div class="card blue">
+      <div class="card-icon">📋</div>
+      <div class="card-title blue-t">機能要件</div>
+      <div class="card-desc">
+        システムが「何をするか」。<br>
+        例：ユーザーがフォームから問い合わせを送信できる、管理者が一覧を検索・フィルタできる
+      </div>
+    </div>
+    <div class="card purple">
+      <div class="card-icon">⚙️</div>
+      <div class="card-title purple-t">非機能要件</div>
+      <div class="card-desc">
+        システムが「どの程度の品質で動くか」。<br>
+        例：応答時間3秒以内、同時100人アクセス、年間稼働率99.5%、データ暗号化
+      </div>
+    </div>
+  </div>
+
+  <p>バイブコーディングで見落とされがちなのは圧倒的に<strong>非機能要件</strong>です。「こういう機能がほしい」という要望はAIに伝えやすいですが、「何人が同時に使うか」「データをどこまで守るか」「障害時にどうなるか」は、意識的に考えなければ検討すらされません。</p>
+
+  <h3>IPAの非機能要求グレード — 6つの大項目</h3>
+
+  <div class="card-grid">
+    <div class="card green">
+      <div class="card-icon">🔄</div>
+      <div class="card-title green-t">1. 可用性</div>
+      <div class="card-desc">システムが止まらないこと。稼働率、障害時の復旧手順、冗長構成</div>
+    </div>
+    <div class="card blue">
+      <div class="card-icon">⚡</div>
+      <div class="card-title blue-t">2. 性能・拡張性</div>
+      <div class="card-desc">応答速度、同時アクセス数、データ量増加時の対応、将来の拡張可能性</div>
+    </div>
+    <div class="card purple">
+      <div class="card-icon">🔧</div>
+      <div class="card-title purple-t">3. 運用・保守性</div>
+      <div class="card-desc">運用時間、バックアップ頻度、監視、障害対応体制、マニュアル化</div>
+    </div>
+    <div class="card yellow">
+      <div class="card-icon">🔄</div>
+      <div class="card-title yellow-t">4. 移行性</div>
+      <div class="card-desc">既存システムからのデータ移行、段階的切り替え、移行リハーサル</div>
+    </div>
+    <div class="card red">
+      <div class="card-icon">🔒</div>
+      <div class="card-title red-t">5. セキュリティ</div>
+      <div class="card-desc">認証・認可、暗号化、アクセス制御、監査ログ、脆弱性対策</div>
+    </div>
+    <div class="card orange">
+      <div class="card-icon">🌍</div>
+      <div class="card-title orange-t">6. システム環境・<br>エコロジー</div>
+      <div class="card-desc">設置場所、消費電力、規格準拠、法令対応</div>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <div class="callout-title">💡 バイブコーディングの規模感における非機能要件</div>
+    大規模システムほど全項目の検討が必要ですが、小規模な個人・業務ツールでも最低限「セキュリティ」「性能・拡張性」「運用・保守性」の3項目は意識しておくと、後から大きな手戻りを防げます。IPAのモデルシステムでは「社会的影響がほとんどないシステム」向けの簡易レベルも定義されています。
+  </div>
+
+  <h3>「作りたいもの」を構造化するための問い</h3>
+  <ul class="checklist">
+    <li>
+      <span class="q">このシステムの利用者は誰か？ 何人か？</span>
+      <span class="hint">「自分だけ」「チーム10人」「不特定多数の学生1000人」で設計が根本的に変わる</span>
+    </li>
+    <li>
+      <span class="q">利用者が「やりたいこと」を一つの動詞で言うと？</span>
+      <span class="hint">「検索する」「提出する」「確認する」など。これがユースケースの出発点</span>
+    </li>
+    <li>
+      <span class="q">扱うデータの中に、漏洩したら困る情報はあるか？</span>
+      <span class="hint">個人情報、認証情報、機密文書があるなら、セキュリティ設計が最優先事項になる</span>
+    </li>
+    <li>
+      <span class="q">このシステムが止まったとき、業務はどうなるか？</span>
+      <span class="hint">「手動で代替可能」なら可用性要件は低い。「業務が完全に停止する」なら冗長化が必要</span>
+    </li>
+    <li>
+      <span class="q">1年後、このシステムはまだ使っているか？ 誰が面倒を見るか？</span>
+      <span class="hint">保守性の問題。自分以外が触る可能性があるなら、コードの可読性とドキュメントが重要</span>
+    </li>
+  </ul>
+
+  <div class="deepdive">
+    <div class="dd-label">🤖 AI DEEP DIVE PROMPT</div>
+    <div class="dd-title">自分のプロジェクトの要件を整理したいとき</div>
+    <code onclick="copyPrompt(this)">私は [あなたのプロジェクトの簡単な説明] を作ろうとしています。
+
+IPAの「ユーザのための要件定義ガイド」と「非機能要求グレード」の考え方に基づいて、以下を整理する手伝いをしてください：
+
+1. 機能要件の洗い出し：主要なユースケースを「誰が・何を・どういう条件で」の形式でリストアップ
+2. 非機能要件の簡易チェック：IPA非機能要求グレードの6大項目（可用性、性能・拡張性、運用・保守性、移行性、セキュリティ、システム環境）それぞれについて、このプロジェクトで検討すべきことがあるか
+3. スコープの明確化：「今回作るもの」と「今回は作らないもの」の境界線の提案
+
+規模感としては [利用者数・利用頻度の目安] です。
+まず質問があればしてください。一度に完璧にする必要はありません。</code>
+  </div>
+</section>
+
+<!-- ═══════════════ Phase 2: Design ═══════════════ -->
+<section class="section" id="phase2">
+  <div class="section-num">PHASE 02</div>
+  <h2>設計を考える</h2>
+  <p class="section-subtitle">「どう構造化するか」— 実装前に決めておくべきこと</p>
+
+  <p>設計とは、要件を実現するための<strong>具体的な構造と仕組みを決める</strong>作業です。IPAのガイドラインでは、基本設計（外部設計）と詳細設計（内部設計）に大別されます。</p>
+
+  <h3>基本設計で決めること</h3>
+  <p>基本設計は「ユーザーの目に見える部分」と「システム全体の構成」を決める工程です。</p>
+
+  <table class="ref-table">
+    <thead>
+      <tr>
+        <th>設計項目</th>
+        <th>内容</th>
+        <th>バイブコーディングでの対応</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="tag tag-des">画面設計</span></td>
+        <td>画面一覧、画面遷移図、画面レイアウト、入出力項目</td>
+        <td>手書きでよいので画面遷移図を描く。AIに伝える最重要資料</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-des">データ設計</span></td>
+        <td>ER図、テーブル定義、CRUD図</td>
+        <td>「どんなデータを保存するか」のリストだけでも作る</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-des">システム構成</span></td>
+        <td>サーバー構成、ネットワーク構成、ソフトウェア構成</td>
+        <td>「フロントだけ？バックエンドも必要？DBは何を使う？」の判断</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-des">外部IF設計</span></td>
+        <td>外部API連携、ファイル入出力の仕様</td>
+        <td>「どの外部サービスと連携するか」のリスト</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>「何を作るべきか」と「システムとして表現するもの」の溝</h3>
+
+  <p>人間が業務として行うときは「常識」で処理している例外やエッジケースを、システムはすべて明示的にルール化しなければなりません。</p>
+
+  <div class="callout warn">
+    <div class="callout-title">⚠ 典型的な例：「問い合わせに自動返信する」</div>
+    <p class="text-sm" style="margin-bottom:0;">
+      業務の言葉では1行で済むこの要件も、システム化すると無数の判断が必要になります。
+      「問い合わせ」の定義は？ トリガーは即時か分類後か？ 同一人物からの重複をどう扱う？ 添付ファイルは？ 日英の分岐は？ 返信失敗時のリトライは？ — これらすべてが「設計」の対象です。
+      人間なら「常識」で対応できることを、コンピュータには一つずつ教える必要があります。
+    </p>
+  </div>
+
+  <h3>バイブコーディングにおける最小限の設計</h3>
+  <p>正式な設計書を書く必要はありませんが、以下の3つだけでもAIの指示に含めると結果が劇的に変わります：</p>
+
+  <div class="card-grid">
+    <div class="card orange">
+      <div class="card-icon">🗺️</div>
+      <div class="card-title orange-t">画面遷移図</div>
+      <div class="card-desc">どの画面からどの画面に移動できるか。手書き、テキスト、Mermaid記法、何でもよい</div>
+    </div>
+    <div class="card blue">
+      <div class="card-icon">🗄️</div>
+      <div class="card-title blue-t">データ項目リスト</div>
+      <div class="card-desc">何を保存するか。「ユーザー情報：名前、メール、作成日、ステータス」のような箇条書き</div>
+    </div>
+    <div class="card green">
+      <div class="card-icon">🔀</div>
+      <div class="card-title green-t">状態遷移</div>
+      <div class="card-desc">データが取りうる状態と遷移条件。「申請中 → 審査中 → 承認/却下」のような流れ</div>
+    </div>
+  </div>
+
+  <div class="deepdive">
+    <div class="dd-label">🤖 AI DEEP DIVE PROMPT</div>
+    <div class="dd-title">設計の概念を実例で理解したいとき</div>
+    <code onclick="copyPrompt(this)">以下のプロジェクトについて、バイブコーディングで実装を始める前に最低限必要な設計を一緒に考えてください。
+
+プロジェクト：[あなたのプロジェクトの説明]
+
+以下の3つの成果物を、テキストベースで簡潔に作成してください：
+1. 画面遷移図（Mermaid記法で）
+2. データ項目リスト（テーブル名と主要カラムの箇条書き）
+3. 主要な状態遷移（「○○が△△したら□□になる」の形式で）
+
+また、この設計を行わずにAIに直接実装させた場合に起きうる具体的な問題を3つ挙げてください。
+それぞれ「なぜ設計なしだと問題が起きるのか」の因果関係も説明してください。</code>
+  </div>
+</section>
+
+<!-- ═══════════════ Phase 3: Non-functional ═══════════════ -->
+<section class="section" id="phase3">
+  <div class="section-num">PHASE 03</div>
+  <h2>見えない品質を考える</h2>
+  <p class="section-subtitle">「動く」と「使える」の間にある溝 — 非機能要件の実際</p>
+
+  <p>機能が正しく動くことと、そのシステムが実用に耐えることは別の問題です。IPAの非機能要求グレードが定義する6大項目は、プロのエンジニアが「当然考慮する」が非エンジニアには見えにくいものを体系化したものです。</p>
+
+  <h3>バイブコーディングで特に落とし穴になる3項目</h3>
+
+  <div class="card-grid">
+    <div class="card red">
+      <div class="card-icon">💥</div>
+      <div class="card-title red-t">エラーハンドリングの不在</div>
+      <div class="card-desc">
+        AIが生成するコードは「正常系」（うまくいく場合）に最適化されがち。
+        ネットワーク切断、API応答なし、不正入力、ディスク満杯 — 異常系への対応が抜ける。
+        <strong>「動いた」と「壊れない」は全く別の品質。</strong>
+      </div>
+    </div>
+    <div class="card yellow">
+      <div class="card-icon">📈</div>
+      <div class="card-title yellow-t">スケーラビリティ</div>
+      <div class="card-desc">
+        10件のデータで快適に動くものが、10万件で動くとは限らない。
+        「全件取得してフロントでフィルタ」のようなコードは少量データでは動くが破綻する。
+        <strong>想定データ量を明示してAIに伝えること。</strong>
+      </div>
+    </div>
+    <div class="card purple">
+      <div class="card-icon">🔗</div>
+      <div class="card-title purple-t">モジュール間の整合性</div>
+      <div class="card-desc">
+        個別にAIに依頼した機能A・B・Cのデータ構造が微妙に食い違う。
+        認証の仕組みが画面ごとに異なる。共通処理がコピペで散在する。
+        <strong>「横断的関心事」を事前に決めておくことの重要性。</strong>
+      </div>
+    </div>
+  </div>
+
+  <h3>「正常系」と「異常系」</h3>
+  <p>ソフトウェアエンジニアリングでは、処理の流れを大きく2つに分けて考えます：</p>
+  <table class="ref-table">
+    <thead>
+      <tr><th>分類</th><th>内容</th><th>具体例</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>正常系</strong></td>
+        <td>すべてが期待通りに動いた場合</td>
+        <td>ユーザーが正しいメールアドレスとパスワードでログインし、ダッシュボードが表示される</td>
+      </tr>
+      <tr>
+        <td><strong>異常系</strong></td>
+        <td>何かが期待通りにいかなかった場合</td>
+        <td>パスワードが間違っている、アカウントがロックされている、DBが応答しない、セッションが切れている</td>
+      </tr>
+      <tr>
+        <td><strong>境界値</strong></td>
+        <td>正常と異常の境目にある入力</td>
+        <td>入力文字数が上限ちょうど、日付が月末、数値が0、空文字列</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">⚠ AIに「異常系」を考えさせるコツ</div>
+    <p class="text-sm" style="margin-bottom:0;">
+      AIに「この機能のエラーハンドリングも実装して」と言うだけでは不十分です。具体的に「ネットワークエラー時」「入力値が空の場合」「認証トークンが期限切れの場合」など、想定する異常パターンを列挙して伝えると、はるかに堅牢なコードが生成されます。
+    </p>
+  </div>
+
+  <div class="deepdive">
+    <div class="dd-label">🤖 AI DEEP DIVE PROMPT</div>
+    <div class="dd-title">自分のプロジェクトの異常系を洗い出したいとき</div>
+    <code onclick="copyPrompt(this)">以下の機能について、プロのソフトウェアエンジニアが当然考慮する「異常系」と「エッジケース」を網羅的に洗い出してください。
+
+機能：[あなたの機能の説明]
+
+以下の分類で整理してください：
+- ユーザー入力に関する異常（不正値、境界値、想定外の文字種）
+- 外部サービスに関する異常（API障害、タイムアウト、レート制限）
+- システムに関する異常（DB接続エラー、ディスク容量、メモリ不足）
+- 業務ロジックに関する異常（権限外の操作、データの競合、二重送信）
+
+各異常に対して「検知方法」と「対処方針」（ユーザーへの通知、リトライ、ログ記録など）も提案してください。</code>
+  </div>
+</section>
+
+<!-- ═══════════════ Phase 4: Security ═══════════════ -->
+<section class="section" id="phase4">
+  <div class="section-num">PHASE 04</div>
+  <h2>安全性を考える</h2>
+  <p class="section-subtitle">「なぜこれはダメなのか」がわからない状態を脱する — セキュリティの最低知識</p>
+
+  <p>セキュリティは非エンジニアにとって最も「何が分からないか分からない」領域です。IPAは「安全なウェブサイトの作り方」を無料公開しており、Webアプリケーションにおける代表的な脆弱性とその対策を解説しています。</p>
+
+  <h3>最低限知っておくべき脅威 — OWASP Top 10より抜粋</h3>
+
+  <table class="ref-table">
+    <thead>
+      <tr><th>脅威</th><th>何が起きるか</th><th>バイブコーディングでの落とし穴</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="tag tag-sec">SQLインジェクション</span></td>
+        <td>悪意ある入力でDB操作を乗っ取られる</td>
+        <td>AIが文字列連結でSQL文を組むコードを生成することがある</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-sec">XSS</span></td>
+        <td>悪意あるスクリプトが他のユーザーのブラウザで実行される</td>
+        <td>ユーザー入力をエスケープせず表示するコードが生成されうる</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-sec">認証の欠陥</span></td>
+        <td>ログインしていないユーザーが保護されたページにアクセスできる</td>
+        <td>各画面の認証チェックが一貫していないことがある</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-sec">APIキー漏洩</span></td>
+        <td>秘密鍵がコードやリポジトリに含まれ外部に露出する</td>
+        <td>環境変数管理を知らないと、キーをコードに直接書いてしまう</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-sec">アクセス制御の欠陥</span></td>
+        <td>一般ユーザーが管理者機能にアクセスできる</td>
+        <td>権限管理を後から追加すると、既存コードとの矛盾が生じやすい</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout info">
+    <div class="callout-title">💡 「漏れたらヤバいデータはそもそも扱わない」という判断</div>
+    <p class="text-sm" style="margin-bottom:0;">
+      バイブコーディングの規模感では、高度なセキュリティ実装を期待するより、<strong>機密データをそもそも扱わない設計にする</strong>方が現実的で安全な場合があります。
+      たとえば「パスワードを自前で管理する」代わりに「OAuth認証（Google/Microsoftログイン）に委ねる」、「クレジットカード情報を保存する」代わりに「Stripeに処理を任せる」といった判断です。
+    </p>
+  </div>
+
+  <div class="deepdive">
+    <div class="dd-label">🤖 AI DEEP DIVE PROMPT</div>
+    <div class="dd-title">自分のプロジェクトのセキュリティリスクを評価したいとき</div>
+    <code onclick="copyPrompt(this)">私が作ろうとしているWebアプリのセキュリティリスクを評価してください。
+
+アプリの概要：[あなたのアプリの説明]
+扱うデータ：[どんなデータを扱うか]
+利用者：[誰が使うか]
+公開範囲：[インターネット公開/社内限定/自分だけ]
+
+以下の観点で評価してください：
+1. OWASP Top 10に基づく主要リスクの該当度（高/中/低/該当なし）
+2. このアプリ固有のリスク（データ漏洩、不正操作など）
+3. 「自前で実装すべきでない」機能の特定（認証、決済など）
+4. バイブコーディングで特に注意すべきセキュリティ上の落とし穴
+5. 最低限実装すべきセキュリティ対策の優先順位付きリスト
+
+IPA「安全なウェブサイトの作り方」の内容も参考にしてください。</code>
+  </div>
+</section>
+
+<!-- ═══════════════ Phase 5: Weaving ═══════════════ -->
+<section class="section" id="phase5">
+  <div class="section-num">PHASE 05</div>
+  <h2>全体を「織る」</h2>
+  <p class="section-subtitle">機能の積み上げではなく、糸と糸を折り重ねるようにシステムを構築する</p>
+
+  <div class="epigraph">
+    <p>システムを作るとは、機能をただ積み上げるものではありません。機能同士を繋ぎ、エラー処理を仕込み、ユーザーの挙動を考慮し、安全性を踏まえ、糸と糸を折り重ねるようなもの。</p>
+  </div>
+
+  <p>個別機能をAIに依頼して「動いた」ものを足し合わせていくアプローチは、ある規模を超えると破綻します。これは「偶有的複雑性」（Accidental Complexity）の蓄積によるものです。</p>
+
+  <h3>横断的関心事（Cross-cutting Concerns）</h3>
+  <p>特定の機能ではなく、<strong>システム全体に横断的に影響する仕組み</strong>のことです。これらを事前に決めておくと、AIへの指示に一貫性が生まれます。</p>
+
+  <div class="card-grid">
+    <div class="card red">
+      <div class="card-icon">🔑</div>
+      <div class="card-title red-t">認証・認可</div>
+      <div class="card-desc">「誰がログインしているか」「何をする権限があるか」の仕組み。すべての画面・APIに影響する</div>
+    </div>
+    <div class="card blue">
+      <div class="card-icon">📝</div>
+      <div class="card-title blue-t">ログ出力</div>
+      <div class="card-desc">何が起きたかの記録。障害調査、セキュリティ監査、利用状況の把握に不可欠</div>
+    </div>
+    <div class="card green">
+      <div class="card-icon">🚨</div>
+      <div class="card-title green-t">エラーハンドリング</div>
+      <div class="card-desc">エラー発生時の統一的な処理方針。ユーザーへの通知方法、リトライ、ログ記録</div>
+    </div>
+    <div class="card purple">
+      <div class="card-icon">🔄</div>
+      <div class="card-title purple-t">データの整合性</div>
+      <div class="card-desc">複数の処理が同時に同じデータを更新したときに矛盾が起きない仕組み</div>
+    </div>
+  </div>
+
+  <h3>「機能を足したら壊れる」問題</h3>
+  <p>バイブコーディングで頻発するパターンを構造的に理解すると：</p>
+
+  <table class="ref-table">
+    <thead>
+      <tr><th>段階</th><th>やったこと</th><th>潜在的な問題</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>「ログイン機能を作って」→ 動いた</td>
+        <td>「管理者」という権限の概念がまだない</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>「プロフィール機能を作って」→ 動いた</td>
+        <td>「自分のプロフィールだけ編集可能」が暗黙の前提</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>「管理者が全ユーザーを閲覧する機能」→ 動いた</td>
+        <td>管理者フラグがDBに後付けされ、既存のログイン処理と不整合</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>「管理者がプロフィールを編集できるように」</td>
+        <td style="color:var(--red);font-weight:500;">→ 1〜3の前提が同時に崩壊。修正が連鎖する</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>この問題を完全に防ぐことはできませんが、<strong>横断的関心事を最初に定義しておく</strong>ことで、各機能を依頼する際に「この認証方式を前提にして」「このエラーハンドリングのパターンに従って」と指示でき、整合性が大幅に向上します。</p>
+
+  <div class="deepdive">
+    <div class="dd-label">🤖 AI DEEP DIVE PROMPT</div>
+    <div class="dd-title">横断的関心事を定義してからバイブコーディングを始めたいとき</div>
+    <code onclick="copyPrompt(this)">以下のプロジェクトについて、個別機能の実装を始める前に決めておくべき「横断的関心事」（Cross-cutting Concerns）を定義してください。
+
+プロジェクト：[あなたのプロジェクトの説明]
+主要機能：[予定している機能のリスト]
+
+以下の各項目について、具体的な方針を提案してください：
+1. 認証・認可：誰がログインでき、何ができるか（ロール定義）
+2. エラーハンドリング：エラー時の統一的な処理パターン
+3. データバリデーション：入力値チェックの共通ルール
+4. ログ出力：何を、どこに、どの粒度で記録するか
+5. 状態管理：データの状態遷移ルール
+
+また、これらの方針を「バイブコーディングのルールファイル」として、AIへの指示に含められる形式でまとめてください。
+（例：Cursor の .cursorrules や Claude の project instructions として使えるテキスト）</code>
+  </div>
+</section>
+
+<!-- ═══════════════ CHECKLIST ═══════════════ -->
+<section class="section" id="checklist">
+  <div class="section-num">PREFLIGHT CHECKLIST</div>
+  <h2>バイブコーディングを始める前の自問リスト</h2>
+  <p class="section-subtitle">全問に答える必要はない。「この問いが存在する」と知っていること自体が防御になる</p>
+
+  <h3>🎯 A. スコープ — 何を作り、何を作らないか</h3>
+  <ul class="checklist" data-group="scope">
+    <li>
+      <span class="q">このシステムは誰のどんな課題を解決するか、1文で言えるか？</span>
+      <span class="hint">言えないなら、まだ要件が曖昧な可能性がある</span>
+    </li>
+    <li>
+      <span class="q">「今回作るもの」と「今回は作らないもの」の境界は明確か？</span>
+      <span class="hint">スコープの曖昧さは、バイブコーディング最大の敵</span>
+    </li>
+    <li>
+      <span class="q">最小限動くもの（MVP）はどの機能だけで成立するか？</span>
+      <span class="hint">全機能を一度に作ろうとすると破綻しやすい</span>
+    </li>
+  </ul>
+
+  <h3>👤 B. ユーザーとデータ — 誰が何を扱うか</h3>
+  <ul class="checklist" data-group="user">
+    <li>
+      <span class="q">利用者は何人か？ 同時にアクセスする可能性は？</span>
+      <span class="hint">1人と1000人では技術選定が根本的に異なる</span>
+    </li>
+    <li>
+      <span class="q">利用者の種類（ロール）は何種類あるか？</span>
+      <span class="hint">「一般ユーザー」と「管理者」がいるだけで認可設計が必要になる</span>
+    </li>
+    <li>
+      <span class="q">扱うデータに個人情報・機密情報は含まれるか？</span>
+      <span class="hint">含まれるなら、セキュリティ設計が最優先事項</span>
+    </li>
+    <li>
+      <span class="q">データ量は1年後にどの程度になるか？</span>
+      <span class="hint">100件と10万件では検索・表示の実装方針が変わる</span>
+    </li>
+  </ul>
+
+  <h3>🗺️ C. 設計 — どう構造化するか</h3>
+  <ul class="checklist" data-group="design">
+    <li>
+      <span class="q">画面遷移図（どの画面からどこに移動できるか）を描いたか？</span>
+      <span class="hint">手書き、テキスト、Mermaid、何でもよい</span>
+    </li>
+    <li>
+      <span class="q">保存するデータの項目リストを書き出したか？</span>
+      <span class="hint">「何を保存するか」を決めることはデータベース設計の第一歩</span>
+    </li>
+    <li>
+      <span class="q">データの状態遷移（ステータスの流れ）を定義したか？</span>
+      <span class="hint">「下書き→提出済→承認→却下」のような流れ</span>
+    </li>
+    <li>
+      <span class="q">外部サービス・APIとの連携ポイントを洗い出したか？</span>
+      <span class="hint">メール送信、認証、ファイルストレージ、外部APIなど</span>
+    </li>
+  </ul>
+
+  <h3>🛡️ D. 安全性 — 何を守るか</h3>
+  <ul class="checklist" data-group="security">
+    <li>
+      <span class="q">認証方式は決めたか？（自前/OAuth/パスワードレス）</span>
+      <span class="hint">可能な限り自前実装を避け、既存サービスに委ねる</span>
+    </li>
+    <li>
+      <span class="q">APIキーや秘密鍵の管理方法は決めたか？</span>
+      <span class="hint">コードに直接書くのは最も危険な落とし穴</span>
+    </li>
+    <li>
+      <span class="q">ユーザー入力のバリデーション方針はあるか？</span>
+      <span class="hint">「ユーザーの入力は常に信頼しない」が原則</span>
+    </li>
+    <li>
+      <span class="q">「自前で実装すべきでない」機能を特定したか？</span>
+      <span class="hint">認証、決済、暗号化など、専門家が作ったサービスに任せるべき領域</span>
+    </li>
+  </ul>
+
+  <h3>🧶 E. 整合性 — 全体がどう繋がるか</h3>
+  <ul class="checklist" data-group="integrity">
+    <li>
+      <span class="q">横断的関心事（認証、エラー処理、ログ）の方針を決めたか？</span>
+      <span class="hint">機能ごとにバラバラに決まると後で矛盾する</span>
+    </li>
+    <li>
+      <span class="q">異常系（エラーパターン）を少なくとも10個列挙したか？</span>
+      <span class="hint">正常に動く場合だけでなく、壊れる場合を想像する訓練</span>
+    </li>
+    <li>
+      <span class="q">機能を追加する順序を考えたか？</span>
+      <span class="hint">基盤（認証、データ構造）→ 主要機能 → 補助機能 の順が安全</span>
+    </li>
+  </ul>
+
+  <h3>🔮 F. 運用 — 作った後のこと</h3>
+  <ul class="checklist" data-group="ops">
+    <li>
+      <span class="q">このシステムを1年後も使っているか？ 誰がメンテナンスするか？</span>
+      <span class="hint">使い捨てなら割り切れるが、継続利用ならドキュメントとテストが必要</span>
+    </li>
+    <li>
+      <span class="q">障害時の対応手順を考えたか？</span>
+      <span class="hint">「動かなくなったらどうする」を事前に決めておく</span>
+    </li>
+    <li>
+      <span class="q">バックアップ・データ復旧の方針はあるか？</span>
+      <span class="hint">データが消えてから考えては遅い</span>
+    </li>
+  </ul>
+</section>
+
+<!-- ═══════════════ Keywords ═══════════════ -->
+<section class="section" id="keywords">
+  <div class="section-num">KEYWORD INDEX</div>
+  <h2>用語索引 — AIと深掘りするための入口</h2>
+  <p class="section-subtitle">各用語をクリックすると、AIに質問するためのプロンプトのヒントを表示します</p>
+
+  <h3>要件定義フェーズ</h3>
+  <div class="kw-grid">
+    <div class="kw-item" title="「○○とは何か、バイブコーディングの文脈で具体例を挙げて説明して」と聞いてみよう">要件定義 <span class="kw-en">Requirements</span></div>
+    <div class="kw-item" title="システムが「何をするか」の定義">機能要件 <span class="kw-en">Functional Req.</span></div>
+    <div class="kw-item" title="システムが「どの程度の品質で動くか」の定義">非機能要件 <span class="kw-en">Non-functional Req.</span></div>
+    <div class="kw-item" title="「誰が・何を・どういう条件で」の記述形式">ユースケース <span class="kw-en">Use Case</span></div>
+    <div class="kw-item" title="最小限の実行可能な製品">MVP <span class="kw-en">Minimum Viable Product</span></div>
+    <div class="kw-item" title="プロジェクトの範囲を決めること">スコープ定義 <span class="kw-en">Scope Definition</span></div>
+  </div>
+
+  <h3>設計フェーズ</h3>
+  <div class="kw-grid">
+    <div class="kw-item" title="ユーザーに見える部分の設計">基本設計 <span class="kw-en">Basic Design</span></div>
+    <div class="kw-item" title="内部処理の詳細な設計">詳細設計 <span class="kw-en">Detailed Design</span></div>
+    <div class="kw-item" title="データの構造と関係性を図示する">ER図 <span class="kw-en">Entity-Relationship</span></div>
+    <div class="kw-item" title="CRUD = Create, Read, Update, Delete">CRUD図 <span class="kw-en">CRUD Matrix</span></div>
+    <div class="kw-item" title="画面間の遷移を図示する">画面遷移図 <span class="kw-en">Screen Flow</span></div>
+    <div class="kw-item" title="データの状態とその遷移条件">状態遷移 <span class="kw-en">State Transition</span></div>
+    <div class="kw-item" title="システム全体の構造">アーキテクチャ <span class="kw-en">Architecture</span></div>
+    <div class="kw-item" title="プレゼンテーション/ビジネス/データの3層">レイヤードアーキテクチャ <span class="kw-en">Layered Arch.</span></div>
+  </div>
+
+  <h3>品質・安全性</h3>
+  <div class="kw-grid">
+    <div class="kw-item" title="IPAが定義する6大項目">非機能要求グレード <span class="kw-en">IPA NFR Grade</span></div>
+    <div class="kw-item" title="システム全体に横断的に影響する仕組み">横断的関心事 <span class="kw-en">Cross-cutting</span></div>
+    <div class="kw-item" title="エラー発生時の対処の仕組み">エラーハンドリング <span class="kw-en">Error Handling</span></div>
+    <div class="kw-item" title="正常/異常/境界の3分類">正常系・異常系 <span class="kw-en">Happy/Unhappy Path</span></div>
+    <div class="kw-item" title="入力値の検証">バリデーション <span class="kw-en">Validation</span></div>
+    <div class="kw-item" title="Webセキュリティ脅威の上位10">OWASP Top 10 <span class="kw-en">OWASP</span></div>
+    <div class="kw-item" title="悪意ある入力でDB操作を乗っ取る攻撃">SQLインジェクション <span class="kw-en">SQL Injection</span></div>
+    <div class="kw-item" title="悪意あるスクリプトを他のユーザーに実行させる攻撃">XSS <span class="kw-en">Cross-Site Scripting</span></div>
+    <div class="kw-item" title="「本人確認」と「権限確認」の区別">認証と認可 <span class="kw-en">AuthN vs AuthZ</span></div>
+    <div class="kw-item" title="同じコードを繰り返さない原則">DRY原則 <span class="kw-en">Don't Repeat Yourself</span></div>
+  </div>
+
+  <h3>テスト・運用</h3>
+  <div class="kw-grid">
+    <div class="kw-item" title="開発とテストの対応を示すモデル">V字モデル <span class="kw-en">V-Model</span></div>
+    <div class="kw-item" title="個別の関数・モジュールのテスト">単体テスト <span class="kw-en">Unit Test</span></div>
+    <div class="kw-item" title="複数モジュールの連携テスト">結合テスト <span class="kw-en">Integration Test</span></div>
+    <div class="kw-item" title="ユーザーの操作シナリオに基づくテスト">E2Eテスト <span class="kw-en">End-to-End Test</span></div>
+    <div class="kw-item" title="変更後に既存機能が壊れていないか確認">回帰テスト <span class="kw-en">Regression Test</span></div>
+    <div class="kw-item" title="コードを整理して品質を改善する">リファクタリング <span class="kw-en">Refactoring</span></div>
+  </div>
+
+  <div class="deepdive mt-md">
+    <div class="dd-label">🤖 AI DEEP DIVE PROMPT</div>
+    <div class="dd-title">知らない用語について体系的に学びたいとき</div>
+    <code onclick="copyPrompt(this)">以下の用語について、バイブコーディング（AIにコードを書かせる開発手法）の文脈で教えてください。
+
+用語：[ここに用語を入れる]
+
+以下の形式で回答してください：
+1. 一言での定義
+2. なぜバイブコーディングで重要か（知らないとどんな問題が起きるか）
+3. 具体例：Webアプリ（例：タスク管理ツール）を例にした説明
+4. 関連する概念（この用語を理解すると次に学ぶべき概念）
+5. バイブコーディングで活かすための実践的なアドバイス1つ
+
+プログラミング初学者向けに、専門用語の初出時には簡単な説明を添えてください。</code>
+  </div>
+</section>
+
+</main>
+
+<!-- ═══════════════ Footer ═══════════════ -->
+<footer class="footer">
+  <div class="footer-inner">
+    <p><strong>公開情報</strong></p>
+    <p>
+      バージョン: v0.1.0<br>
+      最終更新: 2026-02-14<br>
+      更新方針: 必要時に随時更新（単一ページ運用）
+    </p>
+    <p><strong>参照元</strong></p>
+    <p>
+      IPA「ユーザのための要件定義ガイド 第2版」—
+      <a href="https://www.ipa.go.jp/archive/digital/iot-en-ci/jyouryuu/youkenteigi.html" target="_blank" rel="noopener">IPA要件定義</a><br>
+      IPA「非機能要求グレード 2018」—
+      <a href="https://www.ipa.go.jp/archive/digital/iot-en-ci/jyouryuu/hikinou/ent03-b.html" target="_blank" rel="noopener">IPA非機能要求グレード</a><br>
+      IPA「安全なウェブサイトの作り方」—
+      <a href="https://www.ipa.go.jp/security/vuln/websecurity/" target="_blank" rel="noopener">IPA Webセキュリティ</a><br>
+      IPA「機能要件の合意形成ガイド」（画面編・データモデル編）— URL確認中<br>
+      IPA「共通フレーム2013」— URL確認中<br>
+      OWASP Top 10 —
+      <a href="https://owasp.org/www-project-top-ten/" target="_blank" rel="noopener">owasp.org</a><br>
+      IPA DX SQUARE「要件定義とは？」—
+      <a href="https://dx.ipa.go.jp/youken-teigi" target="_blank" rel="noopener">DX SQUARE</a>
+    </p>
+    <p style="margin-top:16px;">
+      本ガイドは特定の投稿（バイブコーディングにおけるエンジニアリング知識の必要性についての指摘）をきっかけに、非エンジニアの学習リソースとして作成されたものです。
+      内容はIPA公開資料および一般的なソフトウェアエンジニアリングの知識体系に基づいています。
+    </p>
+  </div>
+</footer>
+
+<script>
+// ── Checklist click handler ──
+function toggleChecklistItem(item) {
+  item.classList.toggle('checked');
+  item.setAttribute('aria-pressed', String(item.classList.contains('checked')));
+}
+
+document.querySelectorAll('.checklist li').forEach(li => {
+  li.setAttribute('role', 'button');
+  li.setAttribute('tabindex', '0');
+  li.setAttribute('aria-pressed', String(li.classList.contains('checked')));
+  li.addEventListener('click', () => toggleChecklistItem(li));
+  li.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggleChecklistItem(li);
+    }
+  });
+});
+
+// ── Copy prompt handler ──
+function copyPrompt(el) {
+  navigator.clipboard.writeText(el.textContent.replace('📋 クリックでコピー', '').replace('✓ コピーしました', '').trim());
+  el.classList.add('copied');
+  setTimeout(() => el.classList.remove('copied'), 1500);
+}
+
+// ── Sticky nav active state ──
+const sections = document.querySelectorAll('.section[id]');
+const links = document.querySelectorAll('.toc-link');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const active = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+      if (active) active.classList.add('active');
+    }
+  });
+}, { rootMargin: '-80px 0px -60% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// ── Keyword tooltip ──
+document.querySelectorAll('.kw-item').forEach(item => {
+  item.setAttribute('role', 'button');
+  item.setAttribute('tabindex', '0');
+
+  const copyKeywordPrompt = () => {
+    const term = item.childNodes[0].textContent.trim();
+    const prompt = `以下の用語について、バイブコーディング（AIにコードを書かせる開発手法）の文脈で、プログラミング初学者向けに教えてください。\n\n用語：${term}\n\n1. 一言での定義\n2. なぜバイブコーディングで重要か\n3. Webアプリを例にした具体例\n4. 関連概念`;
+    navigator.clipboard.writeText(prompt);
+    const orig = item.innerHTML;
+    item.style.borderColor = 'var(--accent)';
+    item.innerHTML = `<span style="color:var(--accent);font-size:12px;">✓ プロンプトをコピーしました</span>`;
+    setTimeout(() => { item.innerHTML = orig; item.style.borderColor = ''; }, 1500);
+  };
+
+  item.addEventListener('click', copyKeywordPrompt);
+  item.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      copyKeywordPrompt();
+    }
+  });
+});
+
+document.querySelectorAll('.deepdive code').forEach(codeEl => {
+  codeEl.setAttribute('role', 'button');
+  codeEl.setAttribute('tabindex', '0');
+  codeEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      copyPrompt(codeEl);
+    }
+  });
+});
+</script>
+</body>
+</html>
